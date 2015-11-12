@@ -25,9 +25,11 @@ io.on('connection', function(socket){
 	socket.on('disconnect', function(socket){
 		console.log(":((((((")
 	})
-	socket.on('draw', function(start, end, color){
-		socket.broadcast.emit("draw", start, end, color);
+	socket.on('move', function(start, end, color){
+		socket.broadcast.emit("move", start, end, color);
 	})
+
+	socket.broadcast.emit('new_player', socket.id);
 
 });
 
