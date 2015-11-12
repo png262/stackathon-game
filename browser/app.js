@@ -40,15 +40,17 @@ socket.on("new_player", function(player_id){
 socket.on('move', function(moveObj, direction) {
 	console.log("player"+moveObj.id+" moved "+direction);
 	//players[moveObj.id].body.setZeroVelocity();
-	if(direction =="up")
-		players[moveObj.id].body.moveUp(300)
-	else if(direction =="down")
-		players[moveObj.id].body.moveDown(300)
-	else if(direction =="left")
-		players[moveObj.id].body.moveLeft(300)
-	else if(direction =="right")
-		players[moveObj.id].body.moveRight(300)
+	// if(direction =="up")
+	// 	players[moveObj.id].body.moveUp(300)
+	// else if(direction =="down")
+	// 	players[moveObj.id].body.moveDown(300)
+	// else if(direction =="left")
+	// 	players[moveObj.id].body.moveLeft(300)
+	// else if(direction =="right")
+	// 	players[moveObj.id].body.moveRight(300)
 	//players[moveObj.id].body.setZeroVelocity();
+	players[moveObj.id].body.position.x= moveObj.x
+	players[moveObj.id].body.position.y= moveObj.y
 })
 
 // PHASER
@@ -89,7 +91,7 @@ function create() {
 
 function update() {
 
-    player.body.setZeroVelocity();
+    //player.body.setZeroVelocity();
     //player2.body.setZeroVelocity();
 
     if (cursors.up.isDown)

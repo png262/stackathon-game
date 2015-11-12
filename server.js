@@ -20,17 +20,20 @@ server.listen(1337, function () {
 var allUsers = {};
 
 io.on('connection', function(socket){
+	console.log("A new client has connected", socket.id)
+
+
 	//Sending back existing users to the new client
 	socket.emit('initializeUsers', allUsers, socket.id);
 
 	//adding new user to the allUsers object
 	allUsers[socket.id] = {x:100, y:100}
+	console.log("allUsers", allUsers)
+
 
 	//notifying rest of the clients about the new player
 	socket.broadcast.emit('new_player', socket.id);
 
-	console.log("A new client has connected", socket.id)
-	console.log("allUsers", allUsers)
 
 	//if received a move event from player X, update playerX position (x&y coordinates)
 	//then broadcast emit to the rest of the players
