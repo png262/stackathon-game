@@ -17,21 +17,41 @@ server.listen(1337, function () {
     console.log('The server is listening on port 1337!');
 });
 
+var allUsers = {};
 
 io.on('connection', function(socket){
+	//Sending back existing users to the new client
+	socket.emit('initializeUsers', allUsers, socket.id);
 
-	console.log("A new client has connected", socket.id)
+	//adding new user to the allUsers object
+	allUsers[socket.id] = {x:100, y:100}
 
-	socket.on('disconnect', function(socket){
-		console.log(":((((((")
-	})
-	socket.on('move', function(start, end, color){
-		socket.broadcast.emit("move", start, end, color);
-	})
-
+	//notifying rest of the clients about the new player
 	socket.broadcast.emit('new_player', socket.id);
 
+	console.log("A new client has connected", socket.id)
+	console.log("allUsers", allUsers)
+
+	//if received a move event from player X, update playerX position (x&y coordinates)
+	//then broadcast emit to the rest of the players
+	socket.on('move', function(moveObj, direction) {
+		allUsers[moveObj.id] = {x: moveObj.x, y: moveObj.y}
+
+		console.log(moveObj.id +" moved "+direction+"and his current position is x:"+moveObj.x+"  and y:"+moveObj.y)
+		socket.broadcast.emit('move', moveObj, direction);
+	})
+
+
+
+	socket.on('disconnect', function(){
+		console.log("A client has disconnected", socket.id)
+		delete allUsers[socket.id]
+		console.log("updated allUsers is", allUsers)
+	})
+
 });
+
+
 
 
 
