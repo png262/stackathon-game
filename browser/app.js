@@ -7,7 +7,6 @@ var cursors;
 
 var game = new Phaser.Game(800, 600, Phaser.AUTO, 'phaser-example', { preload: preload, create: create, update: update, render: render });
 
-
 function createPlayer(player_id, x, y) {
 	console.log("creating player", player_id +"at x:"+x+"    y:"+y)
 	game.load.image(player_id,'test.ico');
@@ -19,23 +18,24 @@ function createPlayer(player_id, x, y) {
 	game.physics.arcade.enable(player2);
 }
 
-    socket.on('connect', function(){
+socket.on('connect', function(){
 	console.log("I have connected to the server")
-	})
+})
 
-	socket.on('initializeUsers', function(allUsers, mysocket_id) {
+socket.on('initializeUsers', function(allUsers, mysocket_id) {
 	console.log("allUsers", allUsers)
 	for(var key in allUsers) {
-		createPlayer(key, allUsers[key].x, allUsers[key].y);
+		if (key !== 'ball')
+			createPlayer(key, allUsers[key].x, allUsers[key].y);
 	}
 	console.log("my socket ID is", mysocket_id)
 	myPlayerID = mysocket_id;
-	})
+})
 
 
 
 socket.on('move', function(moveObj, direction) {
-	console.log( "player"+moveObj.id+" moved to x:"+moveObj.x +" and y:" +moveObj.y);
+	//console.log( "player"+moveObj.id+" moved to x:"+moveObj.x +" and y:" +moveObj.y);
 	//players[moveObj.id].body.setZeroVelocity();
 	// if(direction =="up")
 	// 	players[moveObj.id].body.moveUp(300)
@@ -49,9 +49,13 @@ socket.on('move', function(moveObj, direction) {
 	//console.log(players[moveObj.id].body.position.x);
 	// players[moveObj.id].body.position.x= moveObj.x
 	// players[moveObj.id].body.position.y= moveObj.y
-	player2.x=moveObj.x;
-	player2.y=moveObj.y;
-
+	if (moveObj.id === 'ball') {
+		ball.x = moveObj.x;
+		ball.y = moveObj.y;
+	} else {
+		player2.x=moveObj.x;
+		player2.y=moveObj.y;
+	}
 })
 
 socket.on('player_left', function(socket_id) {
@@ -59,8 +63,10 @@ socket.on('player_left', function(socket_id) {
 })
 
 socket.on("new_player", function(player_id){
-	console.log("A new player has joined", player_id)
-	createPlayer(player_id, game.world.centerX, game.world.centerY)
+	if (player_id !== 'ball') {
+		console.log("A new player has joined", player_id)
+		createPlayer(player_id, game.world.centerX, game.world.centerY)
+	}
 })
 
 // PHASER
@@ -78,10 +84,7 @@ function preload() {
 function create() {
 
     game.add.tileSprite(0, 0, 800, 600, 'background');
-
     game.world.setBounds(0, 0, 800, 600);
-
-
     game.physics.startSystem(Phaser.Physics.ARCADE)
     // game.physics.startSystem(Phaser.Physics.P2JS);
 
@@ -109,7 +112,6 @@ function create() {
     ball.body.bounce.set(1,1);
     ball.body.drag.set(5);
 
-
     cursors = game.input.keyboard.createCursorKeys();
 
     game.camera.follow(player);
@@ -117,10 +119,16 @@ function create() {
     console.log("finish creating game")
 }
 
-var lastPosition = {x: null, y: null}
+var lastPosition = {x: null, y: null};
+var lastBallPosition = {x: null, y: null};
+
 function update() {
     if(player.body.position.x != lastPosition.x || player.body.position.y != lastPosition.y) {
     	socket.emit("move", {id: myPlayerID, x: player.position.x, y: player.position.y}, "right");
+    }
+
+    if(ball.body.position.x != lastBallPosition.x || ball.body.position.y != lastBallPosition.y) {
+    	socket.emit("move", {id: 'ball', x: ball.position.x, y: ball.position.y}, "right");
     }
 
     // player.body.setZeroVelocity();
@@ -186,9 +194,11 @@ function update() {
         player.body.angularVelocity = 0;
     }
 
-
     lastPosition.x = player.body.position.x; 
     lastPosition.y = player.body.position.y; 
+	lastBallPosition.x = ball.body.position.x; 
+    lastBallPosition.y = ball.body.position.y;
+
     game.physics.arcade.collide(player, ball);
 }
 
