@@ -15,6 +15,10 @@ function createPlayer(player_id, x, y) {
 	players[player_id] = game.add.sprite(x, y, 'playericon');
 	playersarr.push(players[player_id]);
 	game.physics.arcade.enable(players[player_id]);
+	players[player_id].body.collideWorldBounds = true;
+    players[player_id].body.maxVelocity.set(200);
+    players[player_id].body.drag.set(10);
+    players[player_id].anchor.set(0.5);
 }
 
     socket.on('connect', function(){
@@ -79,7 +83,6 @@ function create() {
 
 
     game.physics.arcade.enable(player);
-    game.physics.arcade.enable(ball);
 
 
     player.body.collideWorldBounds = true;
@@ -174,6 +177,7 @@ function update() {
     lastPosition.x = player.body.position.x; 
     lastPosition.y = player.body.position.y; 
     game.physics.arcade.collide(ball, playersarr);
+    game.physics.arcade.collide(player, playersarr);
 
 }
 
