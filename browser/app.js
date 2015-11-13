@@ -11,7 +11,6 @@ var ball;
 
 var game = new Phaser.Game(800, 600, Phaser.AUTO, 'phaser-example', { preload: preload, create: create, update: update, render: render });
 
-
 function createPlayer(player_id, x, y) {
 	console.log("creating player", player_id +"at x:"+x+"    y:"+y)
 	players[player_id] = game.add.sprite(x, y, 'playericon');
@@ -23,36 +22,44 @@ function createPlayer(player_id, x, y) {
     players[player_id].anchor.set(0.5);
 }
 
-    socket.on('connect', function(){
-		console.log("I have connected to the server")
-	})
 
-	socket.on('initializeUsers', function(allUsers, mysocket_id) {
-		console.log("allUsers", allUsers)
-		for(var key in allUsers) {
+socket.on('connect', function(){
+	console.log("I have connected to the server")
+})
+
+socket.on('initializeUsers', function(allUsers, mysocket_id) {
+	console.log("allUsers", allUsers)
+	for(var key in allUsers) {
+		if (key !== 'ball')
 			createPlayer(key, allUsers[key].x, allUsers[key].y);
-		}	
-		console.log("my socket ID is", mysocket_id)
-		myPlayerID = mysocket_id;
-	})
+	}
+	console.log("my socket ID is", mysocket_id)
+	myPlayerID = mysocket_id;
+})
 
+socket.on('move', function(moveObj, direction) {
+	//console.log( "player"+moveObj.id+" moved to x:"+moveObj.x +" and y:" +moveObj.y);
+	if (moveObj.id === 'ball') {
+		ball.x = moveObj.x;
+		ball.y = moveObj.y;
+	} else {
+		player2.x=moveObj.x;
+		player2.y=moveObj.y;
+	}
+})
 
+    
 
-	socket.on('move', function(moveObj, direction) {
-		// console.log( "player"+moveObj.id+" moved to x:"+moveObj.x +" and y:" +moveObj.y);
-		players[moveObj.id].x= moveObj.x
-		players[moveObj.id].y= moveObj.y
-	})
-
-	socket.on('player_left', function(socket_id) {
+socket.on('player_left', function(socket_id) {
 		players[socket_id].destroy(true);
 	})
 
-	socket.on("new_player", function(player_id){
+socket.on("new_player", function(player_id){
+	if (player_id !== 'ball') {
 		console.log("A new player has joined", player_id)
 		createPlayer(player_id, game.world.centerX, game.world.centerY)
-	})
-
+	}
+})
 
 
 function preload() {
@@ -61,12 +68,11 @@ function preload() {
 
 }
 
-
-
 function create() {
 	//Create board
     game.add.tileSprite(0, 0, 800, 600, 'background');
     game.world.setBounds(0, 0, 800, 600);
+
 	game.physics.startSystem(Phaser.Physics.ARCADE)
 
 	//Generate your player
@@ -117,53 +123,18 @@ function create() {
     
 }
 
-var lastPosition = {x: null, y: null}
+var lastPosition = {x: null, y: null};
+var lastBallPosition = {x: null, y: null};
+
 function update() {
     if(player.body.position.x != lastPosition.x || player.body.position.y != lastPosition.y) {
     	socket.emit("move", {id: myPlayerID, x: player.position.x, y: player.position.y}, "right");
     }
 
 
-    // player.body.setZeroVelocity();
-    // player.body.velocity.x = 0;
-    // player.body.velocity.y = 0;
-    //game.physics.arcade.moveToPointer(player, 60, game.input.activePointer, 500);
-
-    // if (cursors.up.isDown)
-    // {
-    //     // player.body.position.x = 100;
-    //     // player.body.moveUp(300)
-    //     player.body.velocity.y = -100;
-        
-
-    //     //socket.emit("move",  {id: myPlayerID, x: player.position.x, y: player.position.y}, "up");
-    //     //player2.body.moveDown(300)
-    // }
-    // else if (cursors.down.isDown)
-    // {
-    //     // player.body.position.x = 200;
-    //     // player.body.moveDown(300);
-    //     player.body.velocity.y = 100;
-
-
-    //     //socket.emit("move", {id: myPlayerID, x: player.position.x, y: player.position.y}, "down");
-    // }
-
-    // if (cursors.left.isDown)
-    // {
-    //     // player.body.position.x = 300;
-    //     // player.body.moveLeft(300);
-    //     //socket.emit("move", {id: myPlayerID, x: player.position.x, y: player.position.y}, "left");
-    //     player.body.velocity.x = -100;
-
-    // }
-    // else if (cursors.right.isDown)
-    // {
-    //     // player.body.position.x = 400;
-    //     // player.body.moveRight(300);
-    //     player.body.velocity.x = 100;
-
-    // }
+    if(ball.body.position.x != lastBallPosition.x || ball.body.position.y != lastBallPosition.y) {
+    	socket.emit("move", {id: 'ball', x: ball.position.x, y: ball.position.y}, "right");
+    }
 
     if (cursors.up.isDown)
     {
@@ -187,9 +158,12 @@ function update() {
         player.body.angularVelocity = 0;
     }
 
-
     lastPosition.x = player.body.position.x; 
     lastPosition.y = player.body.position.y; 
+
+	lastBallPosition.x = ball.body.position.x; 
+    lastBallPosition.y = ball.body.position.y;
+
     game.physics.arcade.collide(ball, playersarr);
     game.physics.arcade.collide(player, playersarr);
 
@@ -203,7 +177,6 @@ function update() {
     	ball.kill();
     	ball.reset(game.world.centerX, game.world.centerY)
     }
-
 }
 
 
