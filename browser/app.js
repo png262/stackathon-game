@@ -14,7 +14,7 @@ var RightScoreBoard;
 var host = false;
 
 
-var game = new Phaser.Game(800, 600, Phaser.AUTO, 'phaser-example', { preload: preload, create: create, update: update, render: render });
+var game = new Phaser.Game(1200, 600, Phaser.AUTO, 'phaser-example', { preload: preload, create: create, update: update, render: render });
 
 function createPlayer(player_id, x, y) {
 	console.log("creating player", player_id +"at x:"+x+"    y:"+y)
@@ -90,15 +90,15 @@ socket.on("new_player", function(player_id){
 
 
 function preload() {
-    game.load.image('background','debug-grid-1920x1920.png');
-    game.load.image('playericon','favicon.ico');
+    game.load.image('background','starfield.png'); //'debug-grid-1920x1920.png');
+    game.load.image('playericon','car90.png');
 
 }
 
 function create() {
 	//Create board
-    game.add.tileSprite(0, 0, 800, 600, 'background');
-    game.world.setBounds(0, 0, 800, 600);
+    game.add.tileSprite(0, 0, 1200, 600, 'background');
+    game.world.setBounds(0, 0, 1200, 600);
 
 	game.physics.startSystem(Phaser.Physics.ARCADE)
 
@@ -110,7 +110,7 @@ function create() {
     var bmd = game.add.bitmapData(30, 30);
   	bmd.ctx.beginPath();
   	bmd.circle(15,15,15);
-  	bmd.ctx.fillStyle = '#000000';
+  	bmd.ctx.fillStyle = '#FFFFFF';
   	bmd.ctx.fill();
 
   	//create rectangle for goal
