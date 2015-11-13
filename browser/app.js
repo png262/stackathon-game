@@ -46,17 +46,19 @@ socket.on('initializeUsers', function(allUsers, mysocket_id, host_id) {
 socket.on('move', function(moveObj, direction) {
 	//console.log( "player"+moveObj.id+" moved to x:"+moveObj.x +" and y:" +moveObj.y);
     if(!host) {
-    	if (moveObj.id === 'ball') {
+    	if (moveObj.id === 'ball' && ball) {
     		ball.x = moveObj.x;
     		ball.y = moveObj.y;
     	} else {
             if(moveObj.id == myPlayerID) {
                 player.x=moveObj.x;
                 player.y=moveObj.y;
+                player.rotation = moveObj.r;
             }
             else if(players[moveObj.id]) {
                 players[moveObj.id].x= moveObj.x
                 players[moveObj.id].y= moveObj.y
+                players[moveObj.id].rotation = moveObj.r;
             }
 
         }	
@@ -76,7 +78,7 @@ socket.on('stroke', function(player_id, key) {
     
 
 socket.on('player_left', function(socket_id) {
-		players[socket_id].destroy(true);
+		players[socket_id].kill();
 	})
 
 socket.on("new_player", function(player_id){
@@ -156,8 +158,8 @@ var lastBallPosition = {x: null, y: null};
 
 function update() {
     // if(player.body.position.x != lastPosition.x || player.body.position.y != lastPosition.y) {
-    socket.emit("move", {id: myPlayerID, x: player.position.x, y: player.position.y}, "right");
-    socket.emit('move', {id: 'ball', x: ball.position.x, y: ball.position.y}, "right")
+    socket.emit("move", {id: myPlayerID, x: player.position.x, y: player.position.y, r: player.rotation}, "right");
+    socket.emit('move', {id: 'ball', x: ball.position.x, y: ball.position.y, r: ball.rotation}, "right")
     // }
 
 
@@ -196,7 +198,7 @@ function update() {
     for(var key in players) {
         players[key].body.acceleration.set(0);
         players[key].body.angularVelocity = 0;
-        socket.emit('move', {id: key, x: players[key].x, y: players[key].y})
+        socket.emit('move', {id: key, x: players[key].x, y: players[key].y, r: players[key].rotation})
     }
 
     lastPosition.x = player.body.position.x; 

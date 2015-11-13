@@ -48,7 +48,7 @@ io.on('connection', function(socket){
 	//then broadcast emit to the rest of the players
 	socket.on('move', function(moveObj, direction) {
 		if(moveObj.id) {
-			allUsers[moveObj.id] = {x: moveObj.x, y: moveObj.y}
+			allUsers[moveObj.id] = {x: moveObj.x, y: moveObj.y, r:moveObj.rotation}
 			// console.log(moveObj.id +" moved "+direction+"and his current position is x:"+moveObj.x+"  and y:"+moveObj.y)
 			socket.broadcast.emit('move', moveObj, direction);
 		}
