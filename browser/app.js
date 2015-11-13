@@ -3,10 +3,15 @@ var myPlayerID;
 var players = {};
 var playersarr =[];
 var player;
-var player2;
 var cursors;
 var leftnet;
 var ball;
+var scoreString = 'Score : ';
+var leftscore = 0;
+var rightscore = 0;
+var LeftScoreBoard;
+var RightScoreBoard;
+var host = false;
 
 
 var game = new Phaser.Game(800, 600, Phaser.AUTO, 'phaser-example', { preload: preload, create: create, update: update, render: render });
@@ -27,7 +32,7 @@ socket.on('connect', function(){
 	console.log("I have connected to the server")
 })
 
-socket.on('initializeUsers', function(allUsers, mysocket_id) {
+socket.on('initializeUsers', function(allUsers, mysocket_id, host_id) {
 	console.log("allUsers", allUsers)
 	for(var key in allUsers) {
 		if (key !== 'ball')
@@ -35,19 +40,39 @@ socket.on('initializeUsers', function(allUsers, mysocket_id) {
 	}
 	console.log("my socket ID is", mysocket_id)
 	myPlayerID = mysocket_id;
+    if(myPlayerID == host_id) host = true;
 })
 
 socket.on('move', function(moveObj, direction) {
 	//console.log( "player"+moveObj.id+" moved to x:"+moveObj.x +" and y:" +moveObj.y);
-	if (moveObj.id === 'ball') {
-		ball.x = moveObj.x;
-		ball.y = moveObj.y;
-	} else {
-		player2.x=moveObj.x;
-		player2.y=moveObj.y;
-	}
+    if(!host) {
+    	if (moveObj.id === 'ball') {
+    		ball.x = moveObj.x;
+    		ball.y = moveObj.y;
+    	} else {
+            if(moveObj.id == myPlayerID) {
+                player.x=moveObj.x;
+                player.y=moveObj.y;
+            }
+            else if(players[moveObj.id]) {
+                players[moveObj.id].x= moveObj.x
+                players[moveObj.id].y= moveObj.y
+            }
+
+        }	
+    }
 })
 
+socket.on('stroke', function(player_id, key) {
+    if (host && players[player_id]) {
+        if(key == 'up')
+            game.physics.arcade.accelerationFromRotation(players[player_id].rotation, 200, players[player_id].body.acceleration);
+        else if(key == 'left')
+            players[player_id].body.angularVelocity = -300;
+        else
+            players[player_id].body.angularVelocity = 300;
+    }
+})
     
 
 socket.on('player_left', function(socket_id) {
@@ -98,6 +123,9 @@ function create() {
     leftgoal = game.add.sprite(0,game.world.centerY/2,bmd2)
     rightgoal = game.add.sprite(game.world.width-10, game.world.centerY/2,bmd2)
 
+    LeftScoreBoard = game.add.text(10, 10, scoreString + leftscore, { font: '20px Arial', fill: '#fff' });
+    RightScoreBoard = game.add.text(game.world.width-150, 10, scoreString + rightscore, { font: '20px Arial', fill: '#fff' });
+
 
     game.physics.arcade.enable(ball);
     game.physics.arcade.enable(player);
@@ -127,53 +155,72 @@ var lastPosition = {x: null, y: null};
 var lastBallPosition = {x: null, y: null};
 
 function update() {
-    if(player.body.position.x != lastPosition.x || player.body.position.y != lastPosition.y) {
-    	socket.emit("move", {id: myPlayerID, x: player.position.x, y: player.position.y}, "right");
-    }
+    // if(player.body.position.x != lastPosition.x || player.body.position.y != lastPosition.y) {
+    socket.emit("move", {id: myPlayerID, x: player.position.x, y: player.position.y}, "right");
+    socket.emit('move', {id: 'ball', x: ball.position.x, y: ball.position.y}, "right")
+    // }
 
 
-    if(ball.body.position.x != lastBallPosition.x || ball.body.position.y != lastBallPosition.y) {
-    	socket.emit("move", {id: 'ball', x: ball.position.x, y: ball.position.y}, "right");
+    if(host) {
+        if (cursors.up.isDown)
+        {
+            game.physics.arcade.accelerationFromRotation(player.rotation, 200, player.body.acceleration);
+        }
+        else
+        {
+            player.body.acceleration.set(0);
+        }
+
+        if (cursors.left.isDown)
+        {
+            player.body.angularVelocity = -300;
+        }
+        else if (cursors.right.isDown)
+        {
+            player.body.angularVelocity = 300;
+        }
+        else
+        {
+            player.body.angularVelocity = 0;
+        }
+    }
+    else {
+        if(cursors.up.isDown)
+            socket.emit('stroke',myPlayerID,"up")
+        if(cursors.left.isDown)
+            socket.emit('stroke',myPlayerID,"left")
+        else if (cursors.right.isDown)
+            socket.emit('stroke',myPlayerID,"right")
     }
 
-    if (cursors.up.isDown)
-    {
-        game.physics.arcade.accelerationFromRotation(player.rotation, 200, player.body.acceleration);
-    }
-    else
-    {
-        player.body.acceleration.set(0);
-    }
-
-    if (cursors.left.isDown)
-    {
-        player.body.angularVelocity = -300;
-    }
-    else if (cursors.right.isDown)
-    {
-        player.body.angularVelocity = 300;
-    }
-    else
-    {
-        player.body.angularVelocity = 0;
+    for(var key in players) {
+        players[key].body.acceleration.set(0);
+        players[key].body.angularVelocity = 0;
+        socket.emit('move', {id: key, x: players[key].x, y: players[key].y})
     }
 
     lastPosition.x = player.body.position.x; 
     lastPosition.y = player.body.position.y; 
 
-	lastBallPosition.x = ball.body.position.x; 
-    lastBallPosition.y = ball.body.position.y;
+
+
+	
 
     game.physics.arcade.collide(ball, playersarr);
     game.physics.arcade.collide(player, playersarr);
 
     if(game.physics.arcade.overlap(ball,leftgoal)) {
     	console.log("GOAL!")
+        rightscore++
+        RightScoreBoard.text = scoreString+rightscore;
     	ball.kill();
     	ball.reset(game.world.centerX, game.world.centerY)
     }
     if(game.physics.arcade.overlap(ball,rightgoal)) {
     	console.log("GOAL!")
+        leftscore++ 
+        LeftScoreBoard.text = scoreString+leftscore;
+
     	ball.kill();
     	ball.reset(game.world.centerX, game.world.centerY)
     }
@@ -182,8 +229,8 @@ function update() {
 
 function render() {
 
-    game.debug.cameraInfo(game.camera, 32, 32);
-    game.debug.spriteCoords(player, 32, 500);
+    //game.debug.cameraInfo(game.camera, 32, 32);
+    //game.debug.spriteCoords(player, 32, 500);
 
 }
 
