@@ -52,6 +52,7 @@ function createPlayer(player_id, x, y) {
 function preload() {
     game.load.image('background','debug-grid-1920x1920.png');
     game.load.image('playericon','favicon.ico');
+
 }
 
 
@@ -66,17 +67,34 @@ function create() {
     player = game.add.sprite(game.world.centerX, game.world.centerY, 'playericon');
     playersarr.push(player);
 
-    ball = game.add.sprite(game.world.centerX+100, game.world.centerY+100, 'playericon');
+    //create cicular ball
+    var bmd = game.add.bitmapData(30, 30);
+  	bmd.ctx.beginPath();
+  	bmd.circle(15,15,15);
+  	bmd.ctx.fillStyle = '#000000';
+  	bmd.ctx.fill();
+
+    ball = game.add.sprite(game.world.centerX+100, game.world.centerY+100, bmd);
+    game.physics.arcade.enable(ball);
+
 
     game.physics.arcade.enable(player);
     game.physics.arcade.enable(ball);
 
 
     player.body.collideWorldBounds = true;
+    player.body.maxVelocity.set(200);
+    player.body.drag.set(10);
+    player.anchor.set(0.5);
+
+    ball.body.collideWorldBounds = true;
+    ball.body.bounce.set(1,1);
+    ball.body.drag.set(5);
 
     cursors = game.input.keyboard.createCursorKeys();
 
     game.camera.follow(player);
+
 
     console.log("finished creating game")
     
@@ -88,38 +106,77 @@ function update() {
     	socket.emit("move", {id: myPlayerID, x: player.position.x, y: player.position.y}, "right");
     }
 
-    player.body.velocity.x = 0;
-    player.body.velocity.y = 0;
+
+    // player.body.setZeroVelocity();
+    // player.body.velocity.x = 0;
+    // player.body.velocity.y = 0;
     //game.physics.arcade.moveToPointer(player, 60, game.input.activePointer, 500);
+
+    // if (cursors.up.isDown)
+    // {
+    //     // player.body.position.x = 100;
+    //     // player.body.moveUp(300)
+    //     player.body.velocity.y = -100;
+        
+
+    //     //socket.emit("move",  {id: myPlayerID, x: player.position.x, y: player.position.y}, "up");
+    //     //player2.body.moveDown(300)
+    // }
+    // else if (cursors.down.isDown)
+    // {
+    //     // player.body.position.x = 200;
+    //     // player.body.moveDown(300);
+    //     player.body.velocity.y = 100;
+
+
+    //     //socket.emit("move", {id: myPlayerID, x: player.position.x, y: player.position.y}, "down");
+    // }
+
+    // if (cursors.left.isDown)
+    // {
+    //     // player.body.position.x = 300;
+    //     // player.body.moveLeft(300);
+    //     //socket.emit("move", {id: myPlayerID, x: player.position.x, y: player.position.y}, "left");
+    //     player.body.velocity.x = -100;
+
+    // }
+    // else if (cursors.right.isDown)
+    // {
+    //     // player.body.position.x = 400;
+    //     // player.body.moveRight(300);
+    //     player.body.velocity.x = 100;
+
+    // }
 
     if (cursors.up.isDown)
     {
-        player.body.velocity.y = -100;
+        game.physics.arcade.accelerationFromRotation(player.rotation, 200, player.body.acceleration);
     }
-    else if (cursors.down.isDown)
+    else
     {
-        player.body.velocity.y = 100;
+        player.body.acceleration.set(0);
     }
 
     if (cursors.left.isDown)
     {
-        player.body.velocity.x = -100;
+        player.body.angularVelocity = -300;
     }
     else if (cursors.right.isDown)
     {
-        player.body.velocity.x = 100;
+        player.body.angularVelocity = 300;
     }
+    else
+    {
+        player.body.angularVelocity = 0;
+    }
+
 
     lastPosition.x = player.body.position.x; 
     lastPosition.y = player.body.position.y; 
-
-    // if(game.physics.arcade.intersects(ball,goal)) {
-    // 	ball.destroy();
-    // }
     game.physics.arcade.collide(ball, playersarr);
 
-
 }
+
 
 function render() {
 
@@ -127,6 +184,7 @@ function render() {
     game.debug.spriteCoords(player, 32, 500);
 
 }
+
 
 
 
