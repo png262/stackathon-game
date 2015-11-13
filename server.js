@@ -36,7 +36,7 @@ io.on('connection', function(socket){
 	console.log("emitting new player to everyone else")
 	socket.broadcast.emit('new_player', socket.id);
 
-	}, 3000);
+	}, 1500);
 	
 
 
