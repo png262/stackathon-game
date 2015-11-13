@@ -5,6 +5,8 @@ var playersarr =[];
 var player;
 var player2;
 var cursors;
+var leftnet;
+var ball;
 
 
 var game = new Phaser.Game(800, 600, Phaser.AUTO, 'phaser-example', { preload: preload, create: create, update: update, render: render });
@@ -78,11 +80,23 @@ function create() {
   	bmd.ctx.fillStyle = '#000000';
   	bmd.ctx.fill();
 
+  	//create rectangle for goal
+  	var bmd2 = game.add.bitmapData(10, 300);
+  	bmd2.ctx.beginPath();
+	bmd2.ctx.rect(0, 0, 10, 300);
+	bmd2.ctx.fillStyle = '#FFA500';
+	bmd2.ctx.fill();
+
+
     ball = game.add.sprite(game.world.centerX+100, game.world.centerY+100, bmd);
+    leftgoal = game.add.sprite(0,game.world.centerY/2,bmd2)
+    rightgoal = game.add.sprite(game.world.width-10, game.world.centerY/2,bmd2)
+
+
     game.physics.arcade.enable(ball);
-
-
     game.physics.arcade.enable(player);
+    game.physics.arcade.enable(leftgoal);
+    game.physics.arcade.enable(rightgoal);
 
 
     player.body.collideWorldBounds = true;
@@ -178,6 +192,17 @@ function update() {
     lastPosition.y = player.body.position.y; 
     game.physics.arcade.collide(ball, playersarr);
     game.physics.arcade.collide(player, playersarr);
+
+    if(game.physics.arcade.overlap(ball,leftgoal)) {
+    	console.log("GOAL!")
+    	ball.kill();
+    	ball.reset(game.world.centerX, game.world.centerY)
+    }
+    if(game.physics.arcade.overlap(ball,rightgoal)) {
+    	console.log("GOAL!")
+    	ball.kill();
+    	ball.reset(game.world.centerX, game.world.centerY)
+    }
 
 }
 
