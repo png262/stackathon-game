@@ -23,6 +23,12 @@ var host;
 io.on('connection', function(socket){
 	console.log("A new client has connected", socket.id)
 
+	if(Object.keys(allUsers).length >= 7){
+		console.log("Sorry, Max players exceeded")
+		socket.disconnect();
+		return;
+	}
+
 	if(Object.keys(allUsers).length == 0) {
 		host = socket.id;
 	}
