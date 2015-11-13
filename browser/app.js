@@ -19,6 +19,19 @@ function createPlayer(player_id, x, y) {
 	game.physics.arcade.enable(player2);
 }
 
+    socket.on('connect', function(){
+	console.log("I have connected to the server")
+	})
+
+	socket.on('initializeUsers', function(allUsers, mysocket_id) {
+	console.log("allUsers", allUsers)
+	for(var key in allUsers) {
+		createPlayer(key, allUsers[key].x, allUsers[key].y);
+	}
+	console.log("my socket ID is", mysocket_id)
+	myPlayerID = mysocket_id;
+	})
+
 
 
 socket.on('move', function(moveObj, direction) {
@@ -41,9 +54,13 @@ socket.on('move', function(moveObj, direction) {
 
 })
 
+socket.on('player_left', function(socket_id) {
+	
+})
+
 socket.on("new_player", function(player_id){
-console.log("A new player has joined", player_id)
-createPlayer(player_id, game.world.centerX, game.world.centerY)
+	console.log("A new player has joined", player_id)
+	createPlayer(player_id, game.world.centerX, game.world.centerY)
 })
 
 // PHASER
@@ -54,18 +71,7 @@ function preload() {
     game.load.image('background','debug-grid-1920x1920.png');
     game.load.image('playericon','favicon.ico');
 
-    socket.on('connect', function(){
-	console.log("I have connected to the server")
-	})
 
-	socket.on('initializeUsers', function(allUsers, mysocket_id) {
-	console.log("allUsers", allUsers)
-	for(var key in allUsers) {
-		createPlayer(key, allUsers[key].x, allUsers[key].y);
-	}
-	console.log("my socket ID is", mysocket_id)
-	myPlayerID = mysocket_id;
-	})
 
 }
 
@@ -83,12 +89,21 @@ function create() {
 
     player = game.add.sprite(game.world.centerX, game.world.centerY, 'playericon');
 
+    ball = game.add.sprite(game.world.centerX+100, game.world.centerY+100, 'playericon');
+    game.physics.arcade.enable(ball);
+
+
     game.physics.arcade.enable(player);
     // game.physics.p2.enable(player);
+
+    player.body.collideWorldBounds = true;
+    ball.body.collideWorldBounds = true;
 
     cursors = game.input.keyboard.createCursorKeys();
 
     game.camera.follow(player);
+
+
 
     console.log("finish creating game")
     
@@ -142,7 +157,7 @@ function update() {
     }
     lastPosition.x = player.body.position.x; 
     lastPosition.y = player.body.position.y; 
-
+    game.physics.arcade.collide(player, ball);
     
 
 }
