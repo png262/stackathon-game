@@ -16,10 +16,11 @@ var host = false;
 
 var game = new Phaser.Game(1200, 600, Phaser.AUTO, 'phaser-example', { preload: preload, create: create, update: update, render: render });
 
-function createPlayer(player_id, x, y) {
-	console.log("creating player", player_id +"at x:"+x+"    y:"+y)
-	players[player_id] = game.add.sprite(x, y, 'playericon');
+function createPlayer(player_id, x, y, ct) {
+	console.log("creating player", player_id +"at x: "+x+"    y: "+y+" --- "+ct);
+    players[player_id] = game.add.sprite(x, y, 'playericon');
 	playersarr.push(players[player_id]);
+    if (ct % 2 === 0)  players[player_id].loadTexture('playericon2');
 	game.physics.arcade.enable(players[player_id]);
 	players[player_id].body.collideWorldBounds = true;
     players[player_id].body.maxVelocity.set(200);
@@ -32,15 +33,28 @@ socket.on('connect', function(){
 	console.log("I have connected to the server")
 })
 
-socket.on('initializeUsers', function(allUsers, mysocket_id, host_id) {
-	console.log("allUsers", allUsers)
+socket.on('initializeUsers', function(allUsers, mysocket_id, host_id, userCt) {
+	console.log("allUsers", allUsers);
+    console.log("userCt ", userCt);
 	for(var key in allUsers) {
-		if (key !== 'ball')
-			createPlayer(key, allUsers[key].x, allUsers[key].y);
+		if (key !== 'ball') {
+			createPlayer(key, allUsers[key].x, allUsers[key].y, allUsers[key].ct);
+        }
 	}
+    //check team
+    if (userCt % 2 === 0) {
+        player.loadTexture('playericon2');
+    }
 	console.log("my socket ID is", mysocket_id)
 	myPlayerID = mysocket_id;
     if(myPlayerID == host_id) host = true;
+})
+
+socket.on("new_player", function(player_id, ct){
+    if (player_id !== 'ball') {
+        console.log("A new player has joined", player_id)
+        createPlayer(player_id, game.world.centerX, game.world.centerY, ct);
+    }
 })
 
 socket.on('move', function(moveObj, direction) {
@@ -81,17 +95,12 @@ socket.on('player_left', function(socket_id) {
 		players[socket_id].kill();
 	})
 
-socket.on("new_player", function(player_id){
-	if (player_id !== 'ball') {
-		console.log("A new player has joined", player_id)
-		createPlayer(player_id, game.world.centerX, game.world.centerY)
-	}
-})
 
 
 function preload() {
     game.load.image('background','starfield.png'); //'debug-grid-1920x1920.png');
-    game.load.image('playericon','car90.png');
+    game.load.image('playericon','bsquadron2.png');
+    game.load.image('playericon2','bsquadron3.png');
 
 }
 
@@ -148,9 +157,7 @@ function create() {
 
     game.camera.follow(player);
 
-
     console.log("finished creating game")
-    
 }
 
 var lastPosition = {x: null, y: null};
@@ -203,10 +210,6 @@ function update() {
 
     lastPosition.x = player.body.position.x; 
     lastPosition.y = player.body.position.y; 
-
-
-
-	
 
     game.physics.arcade.collide(ball, playersarr);
     game.physics.arcade.collide(player, playersarr);

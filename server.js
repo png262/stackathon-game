@@ -18,6 +18,7 @@ server.listen(1337, function () {
 });
 
 var allUsers = {};
+var userCt = 0;
 var host;
 
 io.on('connection', function(socket){
@@ -34,18 +35,19 @@ io.on('connection', function(socket){
 	}
 
 	setTimeout(function() {
-    //Sending back existing users to the new client
+    	//Sending back existing users to the new client
+    	userCt++;
 	    console.log("timeout has finished, now emitting allUsers", allUsers)
-		socket.emit('initializeUsers', allUsers, socket.id, host);
+		socket.emit('initializeUsers', allUsers, socket.id, host, userCt);
 
 		//adding new user to the allUsers object
-		console.log("about to add current user to allUsers",allUsers)
-		allUsers[socket.id] = {x:100, y:100}
+		console.log("about to add current user to allUsers",allUsers, userCt)
+		allUsers[socket.id] = {x:100, y:100, ct:userCt}
 		console.log("after adding current user to allUsers", allUsers)
 
 		//notifying rest of the clients about the new player
-		console.log("emitting new player to everyone else")
-		socket.broadcast.emit('new_player', socket.id);
+		console.log("emitting new player to everyone else - ", userCt)
+		socket.broadcast.emit('new_player', socket.id, userCt);
 
 	}, 1500);
 	
@@ -54,7 +56,9 @@ io.on('connection', function(socket){
 	//then broadcast emit to the rest of the players
 	socket.on('move', function(moveObj, direction) {
 		if(moveObj.id) {
-			allUsers[moveObj.id] = {x: moveObj.x, y: moveObj.y, r:moveObj.rotation}
+			if (allUsers[moveObj.id] && allUsers[moveObj.id].ct) 
+				allUsers[moveObj.id] = {x: moveObj.x, y: moveObj.y, r:moveObj.rotation, ct: allUsers[moveObj.id].ct};
+			else allUsers[moveObj.id] = {x: moveObj.x, y: moveObj.y, r:moveObj.rotation};
 			// console.log(moveObj.id +" moved "+direction+"and his current position is x:"+moveObj.x+"  and y:"+moveObj.y)
 			socket.broadcast.emit('move', moveObj, direction);
 		}
@@ -68,8 +72,9 @@ io.on('connection', function(socket){
 	socket.on('disconnect', function(){
 		console.log("A client has disconnected", socket.id)
 		delete allUsers[socket.id]
+		userCt--;
 		socket.broadcast.emit('player_left', socket.id);
-		console.log("updated allUsers is", allUsers)
+		console.log("updated allUsers is", allUsers, userCt);
 	})
 
 });
