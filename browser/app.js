@@ -70,9 +70,9 @@ function create() {
     bmd.ctx.fill();
 
     //create rectangle for goal
-    var bmd2 = game.add.bitmapData(10, 300);
+    var bmd2 = game.add.bitmapData(10, 200);
     bmd2.ctx.beginPath();
-    bmd2.ctx.rect(0, 0, 10, 300);
+    bmd2.ctx.rect(0, 0, 10, 200);
     bmd2.ctx.fillStyle = '#FFA500';
     bmd2.ctx.fill();
 
@@ -84,8 +84,8 @@ function create() {
     ball.body.drag.set(5);
 
     //create left and right goals
-    leftgoal = game.add.sprite(0,game.world.centerY/2,bmd2)
-    rightgoal = game.add.sprite(game.world.width-10, game.world.centerY/2,bmd2)
+    leftgoal = game.add.sprite(0,game.world.centerY/2+50,bmd2)
+    rightgoal = game.add.sprite(game.world.width-10, game.world.centerY/2+50,bmd2)
 
     LeftScoreBoard = game.add.text(10, 10, scoreString + leftscore, { font: '20px Arial', fill: '#fff' });
     RightScoreBoard = game.add.text(game.world.width-150, 10, scoreString + rightscore, { font: '20px Arial', fill: '#fff' });
@@ -182,7 +182,7 @@ function update() {
 function render() {
 
     //game.debug.cameraInfo(game.camera, 32, 32);
-    game.debug.spriteCoords(players[myPlayerID], 32, 500);
+    //game.debug.spriteCoords(players[myPlayerID], 32, 500);
 
 }
 
@@ -191,7 +191,7 @@ socket.on('connect', function(){
 })
 
 socket.on('currentUsers', function(allUsers) {
-    var str = "Users in Lobby: "+Object.keys(allUsers).length+ " ::: "
+    var str = Object.keys(allUsers).length+ " user(s) in lobby ::: "
     for (var key in allUsers) {
         str += allUsers[key].name+","
     }

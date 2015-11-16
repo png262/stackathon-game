@@ -84,7 +84,7 @@ io.on('connection', function(socket){
 			io.emit('currentUsers', allUsers);
 			hostsocket = socket;
 		}
-		else if(Object.keys(allUsers).length >= 7) {
+		else if(Object.keys(allUsers).length >= 8) {
 			console.log("Sorry, max players exceeded")
 			socket.emit('forceDisconnect');
 			socket.disconnect();
